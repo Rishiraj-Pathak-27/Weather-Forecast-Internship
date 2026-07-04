@@ -6,7 +6,7 @@
     <title>Weekly Rainfall Monitoring System - 2015-2025</title>
     <meta
       name="description"
-      content="Weekly rainfall analysis for Vidarbha districts 2015–2025 with growth stage water requirement comparisons for Rice, Soybean and Pigeonpea."
+      content="Weekly rainfall analysis for Vidarbha districts 2015-2025 with growth stage water requirement comparisons for Rice, Soybean and Pigeonpea."
     />
     <link rel="stylesheet" href="styles.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -48,6 +48,10 @@
           <button class="fnav-tab" data-section="sec-pigeonpea">
             <span class="fnav-icon">🌿</span>
             <span class="fnav-label">Pigeonpea</span>
+          </button>
+          <button class="fnav-tab" data-section="sec-dryspell">
+            <span class="fnav-icon">☀️</span>
+            <span class="fnav-label">Dry Spell</span>
           </button>
         </div>
 
@@ -109,6 +113,9 @@
       </button>
       <button class="fnav-tab" data-section="sec-pigeonpea">
         🌿 Pigeonpea · Growth Stages
+      </button>
+      <button class="fnav-tab" data-section="sec-dryspell">
+        ☀️ Dry Spell · Weeks 24–40
       </button>
     </div>
 
@@ -354,6 +361,30 @@
         </p>
       </header>
       <div class="stage-grid" id="pigeonpeaGrid"></div>
+    </div>
+
+    <!-- dry spell -->
+    <div class="section-panel" id="sec-dryspell">
+      <header>
+        <div class="eyebrow">
+          Dry Spell Analysis · Chandrapur, Wardha, Akola &amp; Washim
+          Districts · Meteorological Weeks 24–40
+        </div>
+        <h1>Weekly Dry Spell Days During Monsoon</h1>
+        <p>
+          One chart per year (2015–2025), comparing
+          <strong style="color: #b85520">Chandrapur</strong>,
+          <strong style="color: #6b4fa0">Wardha</strong>,
+          <strong style="color: #2778b0">Akola</strong> and
+          <strong style="color: #3a7550">Washim</strong>. For each
+          meteorological week, the line shows how many of that week's 7 days
+          had rainfall (RF) below 2.5&nbsp;mm — the standard threshold for a
+          dry day. A value of 7 means the entire week was dry; a low value
+          means the week was mostly rainy. Gaps in the Washim line reflect
+          weeks with no recorded station data.
+        </p>
+      </header>
+      <div class="grid" id="gridDry"></div>
     </div>
 
     <footer>

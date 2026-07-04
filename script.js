@@ -748,6 +748,130 @@ PIGEONPEA_STAGES.forEach(stage => {
   renderStageChart(stage);
 });
 
+// chart - 6 dry spell analysis (weeks 24-40, one line chart per year, small multiples)
+
+function buildDryCard(year) {
+  const d = DRY_SPELL_DATA[year];
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = `dry-card-${year}`;
+
+  const cVals = d.chandrapur.filter(v => v !== null);
+  const wVals = d.wardha.filter(v => v !== null);
+  const aVals = d.akola.filter(v => v !== null);
+  const sVals = d.washim.filter(v => v !== null);
+  const cMax = cVals.length ? Math.max(...cVals) : 0;
+  const wMax = wVals.length ? Math.max(...wVals) : 0;
+  const aMax = aVals.length ? Math.max(...aVals) : 0;
+  const sMax = sVals.length ? Math.max(...sVals) : 0;
+  const cAvg = cVals.length ? (cVals.reduce((a, b) => a + b, 0) / cVals.length).toFixed(1) : '—';
+  const wAvg = wVals.length ? (wVals.reduce((a, b) => a + b, 0) / wVals.length).toFixed(1) : '—';
+  const aAvg = aVals.length ? (aVals.reduce((a, b) => a + b, 0) / aVals.length).toFixed(1) : '—';
+  const sAvg = sVals.length ? (sVals.reduce((a, b) => a + b, 0) / sVals.length).toFixed(1) : '—';
+
+  card.innerHTML = `
+    <div class="card-header">
+      <div class="card-left">
+        <div class="card-year">${year}</div>
+        <div class="card-sub">
+          <span style="color:${CCOLOR.chandrapur}">Chandrapur</span> driest week: ${cMax}d · avg ${cAvg}/wk
+          &nbsp;·&nbsp;
+          <span style="color:${CCOLOR.wardha}">Wardha</span> driest week: ${wMax}d · avg ${wAvg}/wk
+          &nbsp;·&nbsp;
+          <span style="color:${CCOLOR.akola}">Akola</span> driest week: ${aMax}d · avg ${aAvg}/wk
+          &nbsp;·&nbsp;
+          <span style="color:${CCOLOR.washim}">Washim</span> driest week: ${sMax}d · avg ${sAvg}/wk
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap"><canvas id="dry-chart-${year}"></canvas></div>
+  `;
+  return card;
+}
+
+function renderDryChart(year) {
+  const d = DRY_SPELL_DATA[year];
+  const ctx = document.getElementById(`dry-chart-${year}`).getContext('2d');
+
+  function makeDataset(label, data, color) {
+    return {
+      label,
+      data,
+      borderColor: color,
+      backgroundColor: color + '22',
+      borderWidth: 2,
+      pointRadius: 3,
+      pointBackgroundColor: color,
+      pointHoverRadius: 5,
+      pointHoverBackgroundColor: color,
+      pointHoverBorderColor: '#ffffff',
+      pointHoverBorderWidth: 2,
+      tension: 0.25,
+      fill: false,
+      spanGaps: false,
+    };
+  }
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: d.weeks,
+      datasets: [
+        makeDataset('Chandrapur', d.chandrapur, CCOLOR.chandrapur),
+        makeDataset('Wardha', d.wardha, CCOLOR.wardha),
+        makeDataset('Akola', d.akola, CCOLOR.akola),
+        makeDataset('Washim', d.washim, CCOLOR.washim),
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400, easing: 'easeOutQuart' },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: { color: '#8c7d6e', font: { family: "'Inter'", size: 10 }, boxWidth: 10, boxHeight: 10 }
+        },
+        tooltip: {
+          enabled: true,
+          callbacks: {
+            title: (items) => `Week ${items[0].label}`,
+            label: (item) => {
+              const v = item.raw;
+              if (v === null || v === undefined) return `${item.dataset.label}: no data`;
+              return `${item.dataset.label}: ${v} dry day${v === 1 ? '' : 's'} this week`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: 'rgba(30,20,10,0.06)', drawTicks: false },
+          ticks: { color: '#8c7d6e', font: { family: "'JetBrains Mono'", size: 9 }, maxRotation: 0, padding: 6 },
+          title: { display: true, text: 'IMD Meteorological Week', color: '#a09080', font: { family: "'Inter'", size: 10 } }
+        },
+        y: {
+          min: 0,
+          max: 7,
+          grid: { color: 'rgba(30,20,10,0.05)', drawTicks: false },
+          ticks: { color: '#8c7d6e', font: { family: "'JetBrains Mono'", size: 9 }, stepSize: 1, precision: 0 },
+          title: { display: true, text: 'Number of Dry Spell Days (RF < 2.5mm)', color: '#a09080', font: { family: "'Inter'", size: 10 } }
+        }
+      }
+    }
+  });
+}
+
+// Small multiples: one chart per year, no filtering/tabs
+DRY_SPELL_YEARS.forEach(year => {
+  const gridDry = document.getElementById('gridDry');
+  const card = buildDryCard(year);
+  gridDry.appendChild(card);
+  renderDryChart(year);
+});
+
 // ===================================================================
 // FLOATING NAV — Aceternity UI FloatingNav behaviour (vanilla JS)
 // Shows when scrolling UP past 5% of page, hides when scrolling DOWN
@@ -812,6 +936,9 @@ PIGEONPEA_STAGES.forEach(stage => {
   let lastScrollY   = window.scrollY;
   let ticking       = false;
 
+  // Show the nav immediately on load, regardless of scroll position
+  floatingNav.classList.add('visible');
+
   function updateNav() {
     const scrollY     = window.scrollY;
     const maxScroll   = document.documentElement.scrollHeight - window.innerHeight;
@@ -820,9 +947,8 @@ PIGEONPEA_STAGES.forEach(stage => {
     lastScrollY       = scrollY;
 
     if (progress < 0.05) {
-      // Near top — always hide
-      floatingNav.classList.remove('visible');
-      closeMobileMenu();
+      // Near top — keep visible (don't hide on initial view)
+      floatingNav.classList.add('visible');
     } else if (direction < 0) {
       // Scrolling UP → reveal
       floatingNav.classList.add('visible');
