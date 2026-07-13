@@ -352,10 +352,17 @@ function setFilter4(year) {
 }
 
 
-// chart - 5 MAI (moisture adquency idx)
+// chart - 5 MAI (moisture adequacy idx) — district-aware (Chandrapur / Akola)
+
+let MAI_CURRENT_DISTRICT = 'chandrapur';
+let maiChartInstances = [];
+
+function maiData() { return MAI_DISTRICTS[MAI_CURRENT_DISTRICT].data; }
+function maiYears() { return Object.keys(maiData()).sort(); }
+function maiLabel() { return MAI_DISTRICTS[MAI_CURRENT_DISTRICT].label; }
 
 function buildMaiCard(year) {
-  const d = MAI_DATA[year];
+  const d = maiData()[year];
   const card = document.createElement('div');
   card.className = 'card';
   card.id = `mai-card-${year}`;
@@ -378,11 +385,11 @@ function buildMaiCard(year) {
 }
 
 function renderMaiChart(year) {
-  const d = MAI_DATA[year];
+  const d = maiData()[year];
   const ctx = document.getElementById(`mai-chart-${year}`).getContext('2d');
   const color = MAI_YEAR_COLOR[year];
 
-  new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: 'line',
     data: {
       labels: d.weeks,
@@ -426,7 +433,7 @@ function renderMaiChart(year) {
           const idx = elements[0].index;
           const week = d.weeks[idx];
           const val = d.mai[idx];
-          ttHeader.textContent = `Year ${year} · Week ${week}`;
+          ttHeader.textContent = `${maiLabel()} · ${year} · Week ${week}`;
           ttRows.innerHTML = (val === null) ? `
             <div class="tt-row">
               <span class="tt-city"><span class="tt-dot" style="background:${color}"></span>MAI</span>
@@ -444,6 +451,7 @@ function renderMaiChart(year) {
       }
     }
   });
+  maiChartInstances.push(chart);
 
   document.getElementById(`mai-chart-${year}`).addEventListener('mouseleave', hideTooltip);
 }
@@ -454,11 +462,12 @@ function buildMaiCombinedCard() {
   const card = document.createElement('div');
   card.className = 'card';
   card.id = 'mai-card-combined';
+  const weeksLabel = MAI_DISTRICTS[MAI_CURRENT_DISTRICT].weeksLabel;
   card.innerHTML = `
     <div class="card-header">
       <div class="card-left">
         <div class="card-year" style="font-size:1.2rem;">All Years Combined</div>
-        <div class="card-sub">MAI overlay · weeks 21–39 · 2021–2025</div>
+        <div class="card-sub">${maiLabel()} · MAI overlay · weeks ${weeksLabel} · 2021–2025</div>
       </div>
     </div>
     <div class="chart-wrap" style="height: 320px;"><canvas id="mai-chart-combined"></canvas></div>
@@ -468,10 +477,11 @@ function buildMaiCombinedCard() {
 
 function renderMaiCombinedChart() {
   const ctx = document.getElementById('mai-chart-combined').getContext('2d');
-  const allWeeks = MAI_DATA[MAI_YEARS[0]].weeks;
+  const years = maiYears();
+  const allWeeks = maiData()[years[0]].weeks;
 
-  const datasets = MAI_YEARS.map(year => {
-    const d = MAI_DATA[year];
+  const datasets = years.map(year => {
+    const d = maiData()[year];
     const color = MAI_YEAR_COLOR[year];
     return {
       label: year,
@@ -490,7 +500,7 @@ function renderMaiCombinedChart() {
     };
   });
 
-  new Chart(ctx, {
+  const chart = new Chart(ctx, {
     type: 'line',
     data: { labels: allWeeks, datasets },
     options: {
@@ -516,7 +526,7 @@ function renderMaiCombinedChart() {
         if (elements.length) {
           const idx = elements[0].index;
           const week = allWeeks[idx];
-          ttHeader.textContent = `Week ${week}`;
+          ttHeader.textContent = `${maiLabel()} · Week ${week}`;
           ttRows.innerHTML = datasets.map(ds => {
             const val = ds.data[idx];
             const color = MAI_YEAR_COLOR[ds.label];
@@ -539,38 +549,74 @@ function renderMaiCombinedChart() {
       }
     }
   });
+  maiChartInstances.push(chart);
 
   document.getElementById('mai-chart-combined').addEventListener('mouseleave', hideTooltip);
 }
 
-// individual MAI cards
+// render / re-render the whole MAI section for the active district
 
-const maiGrid = document.getElementById('maiGrid');
-MAI_YEARS.forEach(year => {
-  const card = buildMaiCard(year);
-  maiGrid.appendChild(card);
-  renderMaiChart(year);
+function renderMaiSection() {
+  maiChartInstances.forEach(c => c.destroy());
+  maiChartInstances = [];
+
+  const maiGrid = document.getElementById('maiGrid');
+  const maiCombinedGrid = document.getElementById('maiCombinedGrid');
+  maiGrid.innerHTML = '';
+  maiCombinedGrid.innerHTML = '';
+  const oldLegend = document.getElementById('maiLegendDiv');
+  if (oldLegend) oldLegend.remove();
+
+  // update section copy
+  const heading = document.getElementById('maiHeading');
+  const subtext = document.getElementById('maiSubtext');
+  const weeksLabel = MAI_DISTRICTS[MAI_CURRENT_DISTRICT].weeksLabel;
+  if (heading) heading.textContent = `${maiLabel()} · MAI by Year · 2021–2025`;
+  if (subtext) subtext.textContent = `Weekly Moisture Adequacy Index for ${maiLabel()} district, weeks ${weeksLabel}. One chart per year, plus a combined view with all five years overlaid.`;
+
+  // individual MAI cards
+  maiYears().forEach(year => {
+    maiGrid.appendChild(buildMaiCard(year));
+    renderMaiChart(year);
+  });
+
+  // combined MAI card with legend
+  const maiLegendDiv = document.createElement('div');
+  maiLegendDiv.id = 'maiLegendDiv';
+  maiLegendDiv.className = 'legend';
+  maiLegendDiv.style.borderBottom = 'none';
+  maiLegendDiv.innerHTML = maiYears().map(year => `
+    <div class="legend-item">
+      <div style="position:relative;width:24px;height:12px;display:flex;align-items:center">
+        <div class="legend-line" style="background:${MAI_YEAR_COLOR[year]};position:absolute;width:100%"></div>
+        <div class="legend-dot-line" style="background:${MAI_YEAR_COLOR[year]};position:absolute;left:8px"></div>
+      </div>
+      <span>${year}</span>
+    </div>
+  `).join('');
+
+  maiCombinedGrid.parentElement.insertBefore(maiLegendDiv, maiCombinedGrid);
+  maiCombinedGrid.appendChild(buildMaiCombinedCard());
+  renderMaiCombinedChart();
+}
+
+// district toggle buttons
+document.querySelectorAll('#maiDistrictToggle .district-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const district = btn.dataset.district;
+    if (district === MAI_CURRENT_DISTRICT) return;
+    MAI_CURRENT_DISTRICT = district;
+    document.querySelectorAll('#maiDistrictToggle .district-btn').forEach(b => {
+      const active = b.dataset.district === district;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+    renderMaiSection();
+  });
 });
 
-// combined MAI card with legend
-
-const maiLegendDiv = document.createElement('div');
-maiLegendDiv.className = 'legend';
-maiLegendDiv.style.borderBottom = 'none';
-maiLegendDiv.innerHTML = MAI_YEARS.map(year => `
-  <div class="legend-item">
-    <div style="position:relative;width:24px;height:12px;display:flex;align-items:center">
-      <div class="legend-line" style="background:${MAI_YEAR_COLOR[year]};position:absolute;width:100%"></div>
-      <div class="legend-dot-line" style="background:${MAI_YEAR_COLOR[year]};position:absolute;left:8px"></div>
-    </div>
-    <span>${year}</span>
-  </div>
-`).join('');
-
-const maiCombinedGrid = document.getElementById('maiCombinedGrid');
-maiCombinedGrid.parentElement.insertBefore(maiLegendDiv, maiCombinedGrid);
-maiCombinedGrid.appendChild(buildMaiCombinedCard());
-renderMaiCombinedChart();
+// initial render
+renderMaiSection();
 
 // 
 document.querySelectorAll('canvas[id^="chart-"]').forEach(c => {

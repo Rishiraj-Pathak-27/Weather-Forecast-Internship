@@ -306,11 +306,15 @@
         <div class="eyebrow">
           Moisture Adequacy Index · MAI = Weekly Rainfall ÷ PET
         </div>
-        <h1>MAI by Year · 2021–2025</h1>
-        <p>
-          Weekly Moisture Adequacy Index, weeks 21–39. One chart per year, plus
-          a combined view with all five years overlaid.
+        <h1 id="maiHeading">MAI by Year · 2021–2025</h1>
+        <p id="maiSubtext">
+          Weekly Moisture Adequacy Index. One chart per year, plus a combined
+          view with all five years overlaid. Switch districts below to compare.
         </p>
+        <div class="district-toggle" id="maiDistrictToggle" role="tablist" aria-label="Select district">
+          <button class="district-btn active" data-district="chandrapur" role="tab" aria-selected="true">Chandrapur</button>
+          <button class="district-btn" data-district="akola" role="tab" aria-selected="false">Akola</button>
+        </div>
       </header>
       <div class="grid" id="maiGrid"></div>
       <div

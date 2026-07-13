@@ -804,3 +804,35 @@ footer {
     min-width: 130px;
   }
 }
+/* ===== MAI DISTRICT TOGGLE ===== */
+.district-toggle {
+  display: inline-flex;
+  gap: 0.35rem;
+  margin-top: 1.1rem;
+  padding: 0.28rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+.district-btn {
+  font-family: "Inter", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 0.42rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+.district-btn:hover {
+  color: var(--text);
+}
+.district-btn.active {
+  color: var(--surface);
+  background: var(--accent);
+  box-shadow: 0 1px 6px rgba(59, 110, 140, 0.35);
+}
